@@ -4,8 +4,8 @@
 # the instance's IAM role supplies S3 credentials automatically.
 set -euxo pipefail
 
-REPO_URL="https://github.com/22-Arpita/student-task-manager.git"  # public repo with these files
-BACKUP_BUCKET="YOUR-UNIQUE-BUCKET-NAME"                           # private S3 bucket (name only)
+REPO_URL="https://github.com/22-Arpita/student-task-manager.git"
+BACKUP_BUCKET="student-task-manager-backup-22-arpita-2026"                          # private S3 bucket (name only)
 APP_PASSWORD=""   # letters/digits only. Blank = a random one is generated and saved on the server
 
 APP_DIR=/opt/taskmanager
@@ -16,9 +16,11 @@ case "$REPO_URL$BACKUP_BUCKET" in
   *YOUR_USER*|*YOUR-UNIQUE*) echo "Edit REPO_URL and BACKUP_BUCKET first." >&2; exit 1;;
 esac
 
-dnf install -y python3-pip nginx git cronie
+dnf install -y python3-pip nginx git cronie awscli
 id taskapp >/dev/null 2>&1 || useradd --system --home-dir "$APP_DIR" --shell /sbin/nologin taskapp
 [ -d "$APP_DIR/.git" ] || git clone "$REPO_URL" "$APP_DIR"
+chown -R root:root "$APP_DIR"
+chmod -R a+rX "$APP_DIR"
 python3 -m venv "$APP_DIR/venv"
 "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt"
 chmod +x "$APP_DIR/backup_to_s3.sh"
