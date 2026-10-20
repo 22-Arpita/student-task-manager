@@ -1,0 +1,39 @@
+# Secrets
+.env
+*.env
+*.pem
+*.key
+credentials
+.aws/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local databases and backups
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python cache and test artifacts
+*.py[cod]
+.pytest_cache/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Task Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header><h1>Student Task Manager</h1></header>
+<main>
+  <section class="summary" aria-label="Summary">
+    <div class="stat" id="stat-total"><span>{{ summary.total }}</span>Total</div>
+    <div class="stat" id="stat-completed"><span>{{ summary.completed }}</span>Completed</div>
+    <div class="stat" id="stat-pending"><span>{{ summary.pending }}</span>Pending</div>
+    <div class="stat warn" id="stat-overdue"><span>{{ summary.overdue }}</span>Overdue</div>
+  </section>
+
+  {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+  {% if errors %}<ul class="errors">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+  <section class="card">
+    <h2>{{ 'Edit task' if edit_task else 'Add task' }}</h2>
+    <form method="post"
+          action="{{ url_for('edit_task', task_id=edit_task['id']) if edit_task else url_for('create_task') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Title
+        <input name="title" maxlength="100" required value="{{ form.title }}">
+      </label>
+      <label>Description
+        <textarea name="description" maxlength="500" rows="3">{{ form.description }}</textarea>
+      </label>
+      <div class="row">
+        <label>Due date
+          <input type="date" name="due_date" value="{{ form.due_date or '' }}">
+        </label>
+        <label>Priority
+          <select name="priority">
+            {% for p in priorities %}<option {{ 'selected' if form.priority == p }}>{{ p }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            {% for s in statuses %}<option {{ 'selected' if form.status == s }}>{{ s }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <button type="submit">{{ 'Save changes' if edit_task else 'Add task' }}</button>
+      {% if edit_task %}<a class="btn secondary" href="{{ url_for('index') }}">Cancel</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="card">
+    <form method="get" class="filters">
+      <input type="search" name="q" placeholder="Search tasks" value="{{ filters.q }}">
+      <select name="status" aria-label="Status filter">
+        <option>All</option>
+        {% for s in filter_statuses %}<option {{ 'selected' if filters.status == s }}>{{ s }}</option>{% endfor %}
+      </select>
+      <select name="priority" aria-label="Priority filter">
+        <option>All</option>
+        {% for p in priorities %}<option {{ 'selected' if filters.priority == p }}>{{ p }}</option>{% endfor %}
+      </select>
+      <button type="submit">Filter</button>
+      <a class="btn secondary" href="{{ url_for('index') }}">Clear</a>
+    </form>
+  </section>
+
+  <section>
+    {% for t in tasks %}
+    {% set overdue = t.status != 'Completed' and t.due_date and t.due_date < today %}
+    <article class="task {{ 'done' if t.status == 'Completed' }}">
+      <div class="task-main">
+        <h3>{{ t.title }}</h3>
+        {% if t.description %}<p>{{ t.description }}</p>{% endif %}
+        <p class="meta">
+          <span class="badge p-{{ t.priority|lower }}">{{ t.priority }}</span>
+          <span class="badge">{{ t.status }}</span>
+          {% if t.due_date %}<span class="badge {{ 'late' if overdue }}">Due {{ t.due_date }}{{ ' (overdue)' if overdue }}</span>{% endif %}
+        </p>
+      </div>
+      <div class="actions">
+        <form method="post" action="{{ url_for('toggle_task', task_id=t.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">{{ 'Mark incomplete' if t.status == 'Completed' else 'Mark complete' }}</button>
+        </form>
+        <a class="btn secondary" href="{{ url_for('edit_task', task_id=t.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_task', task_id=t.id) }}"
+              onsubmit="return confirm('Delete this task?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="danger">Delete</button>
+        </form>
+      </div>
+    </article>
+    {% else %}
+    <p class="empty">No tasks found.</p>
+    {% endfor %}
+  </section>
+</main>
+</body>
+</html>
